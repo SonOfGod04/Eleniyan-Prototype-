@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The People's Mandate — Prototype v0.1</title>
+<style>
+  :root{
+    --bg:#0f1420; --panel:#161d2e; --accent:#2e9e6b; --accent2:#c9a24b;
+    --text:#eef1f6; --muted:#93a0b4; --bad:#c0463c;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;}
+  #app{display:grid;grid-template-columns:260px 1fr 300px;height:100vh;}
+  .panel{padding:14px;overflow-y:auto;}
+  #left{background:#121829;border-right:1px solid #243049;}
+  #center{display:flex;flex-direction:column;justify-content:space-between;}
+  #right{background:#121829;border-left:1px solid #243049;}
+  h1{font-size:18px;color:var(--accent2);margin:0 0 10px;}
+  h2{font-size:14px;color:var(--accent2);border-bottom:1px solid #243049;padding-bottom:4px;}
+  .stat{margin-bottom:8px;font-size:12px;}
+  .stat .bar{background:#243049;border-radius:4px;height:8px;overflow:hidden;margin-top:2px;}
+  .stat .fill{height:100%;background:var(--accent);}
+  #story{flex:1;padding:26px 36px;overflow-y:auto;}
+  #speaker{color:var(--accent2);font-weight:600;margin-bottom:6px;}
+  #text{font-size:16px;line-height:1.6;margin-bottom:18px;white-space:pre-line;}
+  .choice{display:block;width:100%;text-align:left;background:#1c2742;color:var(--text);
+    border:1px solid #2e3b5c;border-radius:8px;padding:12px 14px;margin:8px 0;cursor:pointer;font-size:14px;}
+  .choice:hover{background:#273762;border-color:var(--accent);}
+  .choice:disabled{opacity:0.35;cursor:not-allowed;}
+  #footer{padding:10px 20px;border-top:1px solid #243049;display:flex;gap:10px;background:#121829;}
+  button.util{background:#243049;color:var(--text);border:none;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:12px;}
+  button.util:hover{background:#2e3b5c;}
+  .journal-entry{font-size:12px;border-left:2px solid var(--accent);padding:4px 8px;margin-bottom:8px;color:var(--muted);}
+  .civic-note{background:#1c2742;border:1px dashed var(--accent2);border-radius:6px;padding:10px;font-size:12px;margin-top:10px;}
+  .tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:10px;margin-right:6px;}
+  .tag.verified{background:#1d4d35;color:#9fe3bd;}
+  .tag.verified-general{background:#4d431d;color:#e3d19f;}
+  .tag.fictional{background:#4d1d1d;color:#e39f9f;}
+  #setup{position:fixed;inset:0;background:#0f1420;display:flex;align-items:center;justify-content:center;z-index:10;}
+  .setupbox{background:#161d2e;padding:30px;border-radius:12px;width:400px;}
+  .setupbox input, .setupbox select{width:100%;padding:8px;margin:6px 0 14px;border-radius:6px;border:1px solid #2e3b5c;background:#0f1420;color:var(--text);}
+  .setupbox button{width:100%;padding:10px;background:var(--accent);border:none;border-radius:6px;color:white;font-weight:600;cursor:pointer;}
+  #roadmap-item{font-size:12px;color:var(--muted);margin-bottom:6px;}
+  .locked{opacity:0.5;}
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <div class="setupbox">
+    <h1>THE PEOPLE'S MANDATE</h1>
+    <p style="color:var(--muted);font-size:13px;">Create your citizen. This is a fictional country, fictional characters. Any resemblance to real persons or parties is coincidental.</p>
+    <label>Name</label>
+    <input id="inName" placeholder="e.g. Tari Briggs" value="Tari Briggs">
+    <label>State of Origin</label>
+    <select id="inState">
+      <option>Lagos</option><option>Kano</option><option>Rivers</option>
+      <option>Kaduna</option><option>Oyo</option><option>Benue</option>
+      <option>Plateau</option><option>Borno</option><option>Ogun</option><option>Abuja (FCT)</option>
+    </select>
+    <label>Background</label>
+    <select id="inArche">
+      <option value="trader">Trader's Child — street-smart, resourceful</option>
+      <option value="civil">Civil Servant's Child — process-minded</option>
+      <option value="grad">Returnee Graduate — idealistic, outsider eyes</option>
+      <option value="activist">Campus Activist — bold, confrontational</option>
+    </select>
+    <button onclick="startGame()">Begin</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <div id="left" class="panel">
+    <h1>MANDATE</h1>
+    <h2>Civic Standing</h2>
+    <div id="stats"></div>
+    <h2>Relationships</h2>
+    <div id="relationships"></div>
+  </div>
+
+  <div id="center">
+    <div id="story">
+      <div id="speaker"></div>
+      <div id="text"></div>
+      <div id="choices"></div>
+      <div id="civicNoteBox"></div>
+    </div>
+    <div id="footer">
+      <button class="util" onclick="saveGame()">💾 Save</button>
+      <button class="util" onclick="loadGame()">⤴ Load</button>
+      <button class="util" onclick="resetGame()">⟲ Reset</button>
+      <button class="util" onclick="toggleJournal()">📓 Journal</button>
+      <span style="flex:1;"></span>
+      <span style="font-size:12px;color:var(--muted);" id="missionLabel"></span>
+    </div>
+  </div>
+
+  <div id="right" class="panel">
+    <h2>Roadmap — Chapter 1 & 2</h2>
+    <div id="roadmap"></div>
+    <h2 style="margin-top:16px;">Journal</h2>
+    <div id="journal"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   THE PEOPLE'S MANDATE — Prototype Engine v0.1
+   Pure data-driven mission engine. Portable to Unity/Godot
+   by re-implementing only the render layer.
+========================================================= */
+
+const CIVIC_REF = {
+  "civic_ref_water_01": {
+    status:"verified-general",
+    text:"In the real Nigerian system, urban water supply is generally run by State Water Boards/Agencies, with Local Governments sometimes supporting rural schemes. There is no single simple nationwide rule — this is simplified for learning, not a legal statement."
+  },
+  "civic_ref_oversight_01": {
+    status:"verified-general",
+    text:"Citizens have avenues to report suspected misuse of public funds — e.g., anti-corruption agencies, the press, or legislative oversight committees — though outcomes depend on evidence, institutional capacity, and follow-through, not on any single report alone."
+  },
+  "civic_ref_transport_01": {
+    status:"verified-general",
+    text:"Transport fares and union levies in Nigeria are often regulated informally by unions (e.g., NURTW-type structures) alongside state transport agencies; enforcement and transparency vary widely by state."
+  },
+  "civic_ref_fictional_01": {
+    status:"fictional",
+    text:"Majeriya Ward, Councillor's aide 'Mr. Bello', Chairman Dogo, and the events depicted are entirely fictional and invented for this game."
+  }
+};
+
+const START_STATS = {
+  publicTrust:50, integrity:50, administrativeCapacity:50, fiscalSustainability:50,
+  serviceDelivery:50, security:50, socialCohesion:50, institutionalIndependence:50,
+  economicOpportunity:50, electoralLegitimacy:50, citizenParticipation:50
+};
+
+let GS = null; // game state
+
+function freshState(name, homeState, archetype){
+  return {
+    playerName:name, homeState, archetype,
+    stats: {...START_STATS},
+    relationships: { bello:0, mamaChidinma:10, babaSuleiman:10, emeka:15, touts:0 },
+    flags:{},
+    delayedConsequences:[],
+    journal:[],
+    missionsCompleted:[],
+    currentMission:"m1", currentNode:"n1"
+  };
+}
+
+const ROADMAP = [
+  {id:"m1", title:"Water Wahala", status:"active"},
+  {id:"m2", title:"The Danfo Diaries", status:"locked"},
+  {id:"m3", title:"Fuel Queue", status:"locked", teaser:"Scarcity tests what you're willing to do to get by."},
+  {id:"m4", title:"The Ward Meeting", status:"locked", teaser:"Learn how local governance actually works."},
+  {id:"m5", title:"Whispers at the Market", status:"locked", teaser:"A rumor spreads faster than the truth."},
+  {id:"m6", title:"The Inducement", status:"locked", teaser:"Someone offers you money for your influence."},
+  {id:"m7", title:"School Without Walls", status:"locked", teaser:"An old enemy returns, wearing a hard hat."},
+  {id:"m8", title:"Clinic Closed", status:"locked", teaser:"Advocacy is harder than outrage."},
+  {id:"m9", title:"Building the Coalition", status:"locked", teaser:"You can't please everyone with a small budget."},
+  {id:"m10", title:"The Line Is Drawn", status:"locked", teaser:"Your reputation decides who comes looking for you."}
+];
+
+/* ---------------- MISSION DATA ---------------- */
+
+const MISSIONS = {
+
+m1: {
+  title:"Water Wahala",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"Majeriya Ward, 6:40AM. Your aunt's blue jerrycan is empty again. Six weeks without pipe-borne water. Women are already queueing at Chairman Dogo's private borehole — ₦50 per jerrycan, cash only. A town hall has been called for noon to 'discuss the matter.'",
+      choices:[
+        {label:"Go investigate the borehole operation first", next:"n2_investigate"},
+        {label:"Go straight to the town hall meeting", next:"n3_townhall"},
+        {label:"Ignore it — you have a stall to open", effects:{"stats.citizenParticipation":-5}, setsFlags:{m1_ignored:true}, next:"n2b_ignore"}
+      ]
+    },
+    n2b_ignore:{
+      speaker:"Narrator",
+      text:"You open your stall. By afternoon, word is the meeting happened without you, and a petition is being drafted that you had no say in. Minding your business has a cost too — just a quieter one.",
+      choices:[
+        {label:"Head to the meeting anyway, late", next:"n3_townhall"}
+      ]
+    },
+    n2_investigate:{
+      speaker:"Narrator",
+      text:"At the borehole, a tired young attendant named Fatai collects cash into a notebook. You strike up a conversation.",
+      choices:[
+        {label:"Ask Fatai directly who he reports the money to", next:"n2a_ask"},
+        {label:"Offer to help him for an hour to earn trust first", effects:{"relationships.fatai":10}, next:"n2a_ask"}
+      ]
+    },
+    n2a_ask:{
+      speaker:"Fatai (Borehole Attendant)",
+      text:"'Oga Dogo collects it every evening. He say na for generator fuel and maintenance. But... the generator never spoil before. Just last month them bring new pipes for the main water project — the one wey the Councillor commission for TV — but the valve never open reach here.' He shows you his handwritten ledger.",
+      choices:[
+        {label:"Ask to photograph the ledger as evidence", effects:{"flags.evidence_waterfund":true,"relationships.fatai":5}, next:"n3_townhall", civicNote:"civic_ref_water_01"},
+        {label:"Thank him and leave quietly — don't involve him further", effects:{"relationships.fatai":15}, next:"n3_townhall"}
+      ]
+    },
+    n3_townhall:{
+      speaker:"Narrator",
+      text:"The community hall is packed. Mama Chidinma (market leader), Baba Suleiman (elder), and Emeka (youth organizer) sit up front. Mr. Bello, the Councillor's aide, arrives to 'address concerns' — and to defend the Councillor's record.",
+      choices:[
+        {
+          label:"Stand up and present the borehole ledger as evidence",
+          requires:{"flags.evidence_waterfund":true},
+          effects:{"stats.publicTrust":8,"stats.integrity":5,"relationships.bello":-25,"relationships.mamaChidinma":10},
+          setsFlags:{m1_outcome:"exposed_evidence"},
+          delayedConsequence:{triggerMission:"m7", effect:{"relationships.bello":-15}, note:"Bello remembers who exposed him."},
+          next:"n4_strong",
+          civicNote:"civic_ref_oversight_01"
+        },
+        {
+          label:"Publicly accuse the Councillor of stealing — without hard evidence",
+          effects:{"stats.publicTrust":-6,"stats.integrity":-4,"relationships.bello":-10,"stats.socialCohesion":-5},
+          setsFlags:{m1_outcome:"reckless_accusation"},
+          next:"n4_backfire"
+        },
+        {
+          label:"Stay quiet and just observe the room",
+          effects:{"stats.citizenParticipation":-3},
+          setsFlags:{m1_outcome:"observed_only"},
+          next:"n4_quiet"
+        }
+      ]
+    },
+    n4_strong:{
+      speaker:"Mr. Bello",
+      text:"Bello's face tightens as murmurs spread through the hall. 'This... this will be investigated,' he says, clearly rattled. After the meeting, he approaches you privately.",
+      choices:[
+        {label:"Hear him out", next:"n5_bello_offer"}
+      ]
+    },
+    n4_backfire:{
+      speaker:"Mr. Bello",
+      text:"'You dey make unfounded allegation for public place — be careful,' Bello says calmly, and the room's energy shifts against you slightly; some feel you spoke out of turn without proof. Mama Chidinma pulls you aside afterward.",
+      choices:[
+        {label:"Listen to Mama Chidinma's advice", next:"n5_mama_advice"}
+      ]
+    },
+    n4_quiet:{
+      speaker:"Narrator",
+      text:"You watch Bello smoothly deflect every question with vague promises. The meeting ends with no resolution, but you've learned the political terrain — and who the real players are.",
+      choices:[
+        {label:"Approach Emeka afterward", next:"n5_emeka"}
+      ]
+    },
+    n5_bello_offer:{
+      speaker:"Mr. Bello",
+      text:"'Look — you're clearly someone people listen to. The Councillor doesn't need more wahala before next year. Let's call it transport and 'cooperation' support — ₦150,000, and this matter rests quietly.'",
+      choices:[
+        {
+          label:"Accept the money and let it rest",
+          effects:{"stats.integrity":-15,"stats.publicTrust":-10,"relationships.bello":20},
+          setsFlags:{m1_bribe_accepted:true},
+          delayedConsequence:{triggerMission:"m6", effect:{"flags.rumor_bribe_m1":true}, note:"Rumors of the payment resurface later."},
+          next:"n6_end_bribe"
+        },
+        {
+          label:"Refuse, and demand the water project be completed instead",
+          effects:{"stats.publicTrust":10,"stats.integrity":8,"relationships.bello":-15},
+          next:"n6_end_refuse"
+        },
+        {
+          label:"Report the bribe attempt to a journalist contact",
+          effects:{"stats.integrity":12,"stats.institutionalIndependence":5,"relationships.bello":-30},
+          setsFlags:{m1_reported:true},
+          next:"n6_end_report"
+        }
+      ]
+    },
+    n5_mama_advice:{
+      speaker:"Mama Chidinma",
+      text:"'My son, anger without evidence na just noise. People go clap for you today, but tomorrow dem go forget — or worse, dem go use am against you. If you wan fight, fight well.'",
+      choices:[
+        {label:"Ask her to help you gather real evidence", effects:{"relationships.mamaChidinma":15}, setsFlags:{m1_outcome:"redirected_to_evidence"}, next:"n6_end_redirect"},
+        {label:"Dismiss her caution — you stand by what you said", effects:{"stats.socialCohesion":-5,"relationships.mamaChidinma":-10}, next:"n6_end_standfirm"}
+      ]
+    },
+    n5_emeka:{
+      speaker:"Emeka (Youth Organizer)",
+      text:"'You see how e be? Dem go always talk am sweet. If we no organize ourselves, nothing go change. I dey try put together small youth group — make we start dey track wetin dem promise. You fit join us?'",
+      choices:[
+        {label:"Join Emeka's youth tracking group", effects:{"stats.citizenParticipation":10,"relationships.emeka":15}, next:"n6_end_organize"},
+        {label:"Politely decline for now", effects:{"relationships.emeka":-5}, next:"n6_end_decline"}
+      ]
+    },
+
+    n6_end_bribe:{
+      speaker:"Narrator",
+      text:"You pocket the money. The borehole queue continues tomorrow, unchanged. Somewhere, a ledger entry about 'community relations expenses' is quietly filed. You feel the weight of it more than the cash.",
+      choices:[{label:"End Mission 1 →", next:"__END__"}],
+      civicNote:"civic_ref_fictional_01"
+    },
+    n6_end_refuse:{
+      speaker:"Narrator",
+      text:"Bello leaves irritated but says he'll 'see what can be done.' Three weeks later, water trickles back — partially. It isn't total victory, but it's proof pressure works, even slowly.",
+      choices:[{label:"End Mission 1 →", next:"__END__"}]
+    },
+    n6_end_report:{
+      speaker:"Narrator",
+      text:"Your journalist contact publishes a short piece. Nothing happens immediately — no arrest, no headline scandal. But a file now exists. Institutions move slowly; you've learned that evidence outlives a single news cycle.",
+      choices:[{label:"End Mission 1 →", next:"__END__"}]
+    },
+    n6_end_redirect:{
+      speaker:"Narrator",
+      text:"With Mama Chidinma's network, you quietly start assembling real receipts and testimonies. It's slower and less dramatic than shouting — but far harder for anyone to dismiss.",
+      effects:{"stats.integrity":6},
+      choices:[{label:"End Mission 1 →", next:"__END__"}]
+    },
+    n6_end_standfirm:{
+      speaker:"Narrator",
+      text:"You refuse to back down publicly. Some admire your boldness; others now see you as reckless. Both reputations will follow you.",
+      choices:[{label:"End Mission 1 →", next:"__END__"}]
+    },
+    n6_end_organize:{
+      speaker:"Narrator",
+      text:"You and Emeka begin building a small accountability group — nothing official yet, but a seed. For the first time, 'doing something' feels less lonely.",
+      choices:[{label:"End Mission 1 →", next:"__END__"}]
+    },
+    n6_end_decline:{
+      speaker:"Narrator",
+      text:"You walk home alone, the way you came. The water problem isn't solved, and you're no closer to being part of the solution — yet.",
+      choices:[{label:"End Mission 1 →", next:"__END__"}]
+    }
+  }
+},
+
+m2: {
+  title:"The Danfo Diaries",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"Two weeks later. Danfo fares from Majeriya to the main market have jumped from ₦300 to ₦600 overnight. The park chairman blames 'fuel wahala.' Commuters are furious. Your aunt can no longer afford the trip to restock her pepper soup ingredients.",
+      choices:[
+        {label:"Investigate the real reason for the fare hike", next:"n2_investigate"},
+        {label:"Organize commuters to boycott the route for a day", next:"n2_boycott"},
+        {
+          label:"(If you have relationship with Bello) Ask Bello to 'sort it' privately",
+          requires:{"relationships.bello":10},
+          next:"n2_bello_route"
+        }
+      ]
+    },
+    n2_investigate:{
+      speaker:"Driver 'Shagamu'",
+      text:"'Oga, na true say fuel cost rise small, but the main thing na say NURTW area boys double dem levy. Dem say na 'new management' order. Who be this new management? Nobody sabi.'",
+      effects:{"flags.evidence_fare_hike":true},
+      choices:[{label:"Report findings at the park office", next:"n3_report"}]
+    },
+    n2_boycott:{
+      speaker:"Narrator",
+      text:"You rally a few dozen commuters to trek or use keke instead for a day. It's visible, but risky — the touts notice who organized it.",
+      effects:{"stats.citizenParticipation":8,"relationships.touts":-15,"stats.economicOpportunity":-3},
+      choices:[{label:"See it through", next:"n3_boycott_result"}]
+    },
+    n2_bello_route:{
+      speaker:"Mr. Bello",
+      text:"'For you, I fit talk to person for park... but you sabi say nothing dey free.' The relationship you built — for better or worse — opens a door.",
+      choices:[
+        {label:"Accept his help, no questions asked", effects:{"relationships.bello":10,"stats.integrity":-8}, next:"n3_bello_result"},
+        {label:"Refuse — you don't want to owe him anything", effects:{"relationships.bello":-5,"stats.integrity":5}, next:"n2_investigate"}
+      ]
+    },
+    n3_report:{
+      speaker:"Park Secretary",
+      text:"'You get mouth to talk like that for here? Oya, make I log your complaint.' He writes it in a notebook that looks suspiciously like it hasn't been opened in months.",
+      choices:[
+        {label:"Push for a public meeting with commuters and the union", effects:{"stats.publicTrust":6,"stats.institutionalIndependence":4}, next:"n4_end_pushed"},
+        {label:"Let it go — the notebook feels like a dead end", effects:{"stats.citizenParticipation":-4}, next:"n4_end_deadend"}
+      ]
+    },
+    n3_boycott_result:{
+      speaker:"Narrator",
+      text:"The boycott dents the touts' daily take. Two days later, fares quietly drop to ₦450 — not fully reversed, but a visible win for collective action. You've also made enemies who won't forget your face.",
+      effects:{"stats.publicTrust":10,"stats.economicOpportunity":5},
+      choices:[{label:"End Mission 2 →", next:"__END__"}]
+    },
+    n3_bello_result:{
+      speaker:"Narrator",
+      text:"Fares mysteriously drop the next day — for your street only. Your neighbors are relieved, but you know exactly what this favor will cost later. A flag has been set in your file, invisible for now.",
+      choices:[{label:"End Mission 2 →", next:"__END__"}]
+    },
+    n4_end_pushed:{
+      speaker:"Narrator",
+      text:"The public meeting is tense but productive — a partial fare rollback is agreed, with a promise (untested) of quarterly reviews. Small, slow, real.",
+      choices:[{label:"End Mission 2 →", next:"__END__"}]
+    },
+    n4_end_deadend:{
+      speaker:"Narrator",
+      text:"Nothing changes. The notebook likely never left the drawer. You learn that reporting without pressure often isn't enough on its own.",
+      choices:[{label:"End Mission 2 →", next:"__END__"}]
+    }
+  }
+}
+};
+
+/* ---------------- ENGINE ---------------- */
+
+function startGame(){
+  const name = document.getElementById('inName').value || "Player";
+  const st = document.getElementById('inState').value;
+  const arch = document.getElementById('inArche').value;
+  GS = freshState(name, st, arch);
+  document.getElementById('setup').style.display='none';
+  document.getElementById('app').style.display='grid';
+  addJournal(`You begin your story in ${st}, as a ${arch === 'trader' ? "trader's child" : arch}.`);
+  render();
+}
+
+function getVal(obj, path){
+  return path.split('.').reduce((o,k)=>o&&o[k]!==undefined?o[k]:undefined, obj);
+}
+function setVal(obj, path, val){
+  const keys = path.split('.');
+  let o = obj;
+  for(let i=0;i<keys.length-1;i++){ o = o[keys[i]]; }
+  o[keys[keys.length-1]] = val;
+}
+function addVal(obj, path, delta){
+  const cur = getVal(obj, path) || 0;
+  setVal(obj, path, Math.max(0, Math.min(100, cur + delta)));
+}
+
+function applyEffects(effects){
+  if(!effects) return;
+  for(const key in effects){
+    if(key.startsWith('stats.') || key.startsWith('relationships.')){
+      addVal(GS, key, effects[key]);
+    }
+  }
+}
+function applyFlags(flags){
+  if(!flags) return;
+  for(const k in flags) GS.flags[k] = flags[k];
+}
+
+function checkRequires(req){
+  if(!req) return true;
+  for(const k in req){
+    const val = getVal(GS, k);
+    if(val !== req[k] && !(typeof req[k]==='number' && val >= req[k])) {
+      // numeric threshold support
+      if(typeof req[k]==='number'){ if(!(val>=req[k])) return false; }
+      else if(val !== req[k]) return false;
+    }
+  }
+  return true;
+}
+
+function addJournal(text){
+  GS.journal.unshift({text, t:Date.now()});
+}
+
+function currentMissionObj(){ return MISSIONS[GS.currentMission]; }
+
+function render(){
+  const mission = currentMissionObj();
+  const node = mission.nodes[GS.currentNode];
+  document.getElementById('missionLabel').textContent = `Mission: ${mission.title}`;
+  document.getElementById('speaker').textContent = node.speaker || "";
+  document.getElementById('text').textContent = node.text || "";
+
+  const choicesDiv = document.getElementById('choices');
+  choicesDiv.innerHTML = '';
+  document.getElementById('civicNoteBox').innerHTML = '';
+
+  (node.choices||[]).forEach(choice=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    const allowed = checkRequires(choice.requires);
+    btn.textContent = choice.label + (allowed ? '' : '  🔒');
+    btn.disabled = !allowed;
+    btn.onclick = ()=> pickChoice(choice);
+    choicesDiv.appendChild(btn);
+  });
+
+  renderStats();
+  renderRelationships();
+  renderRoadmap();
+  renderJournal();
+}
+
+function pickChoice(choice){
+  applyEffects(choice.effects);
+  applyFlags(choice.setsFlags);
+  addJournal(`» ${choice.label}`);
+
+  if(choice.delayedConsequence){
+    GS.delayedConsequences.push(choice.delayedConsequence);
+  }
+
+  if(choice.civicNote){
+    showCivicNote(choice.civicNote);
+  }
+
+  if(choice.next === '__END__'){
+    endMission();
+    return;
+  }
+  GS.currentNode = choice.next;
+  render();
+  saveGame();
+}
+
+function showCivicNote(id){
+  const ref = CIVIC_REF[id];
+  if(!ref) return;
+  const box = document.getElementById('civicNoteBox');
+  box.innerHTML = `<div class="civic-note">
+    <span class="tag ${ref.status}">${ref.status.toUpperCase()}</span>
+    <strong>Civic Note:</strong> ${ref.text}
+  </div>`;
+}
+
+function endMission(){
+  // resolve delayed consequences scheduled for THIS mission (none for m1/m2 yet, future missions will check queue)
+  GS.missionsCompleted.push(GS.currentMission);
+  const idx = ROADMAP.findIndex(r=>r.id===GS.currentMission);
+  if(idx>=0 && ROADMAP[idx+1]) {
+    ROADMAP[idx+1].status = (ROADMAP[idx+1].id==='m2') ? 'active' : 'locked';
+    GS.currentMission = ROADMAP[idx+1].id;
+    GS.currentNode = 'n1';
+    // Apply any delayed consequences targeting the mission we just unlocked
+    GS.delayedConsequences = GS.delayedConsequences.filter(dc=>{
+      if(dc.triggerMission === GS.currentMission){
+        applyEffects(dc.effect);
+        addJournal(`(Consequence resurfaces: ${dc.note || 'a past choice matters here.'})`);
+        return false;
+      }
+      return true;
+    });
+    if(MISSIONS[GS.currentMission]){
+      addJournal(`— Mission "${MISSIONS[GS.currentMission].title}" begins —`);
+      render();
+      saveGame();
+    } else {
+      showRoadmapOnlyScreen();
+    }
+  } else {
+    showRoadmapOnlyScreen();
+  }
+}
+
+function showRoadmapOnlyScreen(){
+  document.getElementById('speaker').textContent = "Chapter 1/2 Prototype Complete";
+  document.getElementById('text').textContent =
+    "You've completed the implemented portion of this prototype. Missions 3–10 are designed and ready for scripting " +
+    "in the next development sprint (see roadmap panel). Your accumulated stats and relationships are saved and would " +
+    "carry forward into Chapter 3: The Political Aspirant.";
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('civicNoteBox').innerHTML = '';
+  renderStats(); renderRelationships(); renderRoadmap(); renderJournal();
+}
+
+function renderStats(){
+  const div = document.getElementById('stats');
+  div.innerHTML='';
+  for(const key in GS.stats){
+    const val = GS.stats[key];
+    div.innerHTML += `<div class="stat">${labelize(key)}: ${val}
+      <div class="bar"><div class="fill" style="width:${val}%"></div></div></div>`;
+  }
+}
+function renderRelationships(){
+  const div = document.getElementById('relationships');
+  div.innerHTML='';
+  for(const key in GS.relationships){
+    const val = GS.relationships[key];
+    div.innerHTML += `<div class="stat">${labelize(key)}: ${val>0?'+':''}${val}</div>`;
+  }
+}
+function renderRoadmap(){
+  const div = document.getElementById('roadmap');
+  div.innerHTML='';
+  ROADMAP.forEach(m=>{
+    const done = GS.missionsCompleted.includes(m.id);
+    const active = m.id === GS.currentMission;
+    div.innerHTML += `<div id="roadmap-item" class="${(!done && !active)?'locked':''}">
+      ${done?'✅':active?'▶️':'🔒'} ${m.title}${m.teaser?`<br><em>${m.teaser}</em>`:''}
+    </div>`;
+  });
+}
+function renderJournal(){
+  const div = document.getElementById('journal');
+  div.innerHTML='';
+  GS.journal.slice(0,20).forEach(j=>{
+    div.innerHTML += `<div class="journal-entry">${j.text}</div>`;
+  });
+}
+function toggleJournal(){
+  const j = document.getElementById('journal');
+  j.style.display = (j.style.display==='none') ? 'block':'none';
+}
+function labelize(k){
+  return k.replace(/([A-Z])/g,' $1').replace(/^./,s=>s.toUpperCase());
+}
+
+/* ---------------- SAVE / LOAD ---------------- */
+function saveGame(){
+  try{ localStorage.setItem('peoplesMandateSave', JSON.stringify(GS)); }
+  catch(e){ console.warn('Save failed', e); }
+}
+function loadGame(){
+  const raw = localStorage.getItem('peoplesMandateSave');
+  if(!raw){ alert('No save found.'); return; }
+  GS = JSON.parse(raw);
+  document.getElementById('setup').style.display='none';
+  document.getElementById('app').style.display='grid';
+  if(!MISSIONS[GS.currentMission]) { showRoadmapOnlyScreen(); return; }
+  render();
+}
+function resetGame(){
+  localStorage.removeItem('peoplesMandateSave');
+  location.reload();
+}
+
+// Attempt auto-load on open
+window.addEventListener('load', ()=>{
+  const raw = localStorage.getItem('peoplesMandateSave');
+  if(raw){
+    const resume = confirm('A saved game was found. Resume?');
+    if(resume){ loadGame(); }
+  }
+});
+</script>
+</body>
+</html>
