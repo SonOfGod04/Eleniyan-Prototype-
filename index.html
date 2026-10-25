@@ -519,23 +519,26 @@ function showCivicNote(id){
 }
 
 function endMission(){
-  // resolve delayed consequences scheduled for THIS mission (none for m1/m2 yet, future missions will check queue)
   GS.missionsCompleted.push(GS.currentMission);
   const idx = ROADMAP.findIndex(r=>r.id===GS.currentMission);
-  if(idx>=0 && ROADMAP[idx+1]) {
-    ROADMAP[idx+1].status = (ROADMAP[idx+1].id==='m2') ? 'active' : 'locked';
-    GS.currentMission = ROADMAP[idx+1].id;
-    GS.currentNode = 'n1';
-    // Apply any delayed consequences targeting the mission we just unlocked
+  const nextEntry = ROADMAP[idx+1];
+
+  if(nextEntry){
+    nextEntry.status = 'active';
+    GS.currentMission = nextEntry.id;
+
+    // Resolve delayed consequences targeting this newly active mission
     GS.delayedConsequences = GS.delayedConsequences.filter(dc=>{
       if(dc.triggerMission === GS.currentMission){
         applyEffects(dc.effect);
-        addJournal(`(Consequence resurfaces: ${dc.note || 'a past choice matters here.'})`);
+        addJournal(`(A past choice resurfaces: ${dc.note || 'consequences catch up with you.'})`);
         return false;
       }
       return true;
     });
+
     if(MISSIONS[GS.currentMission]){
+      GS.currentNode = resolveEntryNode(GS.currentMission);
       addJournal(`— Mission "${MISSIONS[GS.currentMission].title}" begins —`);
       render();
       saveGame();
@@ -545,6 +548,17 @@ function endMission(){
   } else {
     showRoadmapOnlyScreen();
   }
+}
+
+// Supports missions with multiple possible starting nodes based on prior flags
+function resolveEntryNode(missionId){
+  const mission = MISSIONS[missionId];
+  if(mission.entryRules){
+    for(const rule of mission.entryRules){
+      if(checkRequires(rule.requires)) return rule.node;
+    }
+  }
+  return 'n1';
 }
 
 function showRoadmapOnlyScreen(){
