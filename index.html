@@ -398,8 +398,393 @@ m2: {
       choices:[{label:"End Mission 2 →", next:"__END__"}]
     }
   }
+}});
+  
+Object.assign(MISSIONS, {
+m3: {
+  title:"Fuel Queue",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"A supply disruption hits Majeriya's filling stations. Queues stretch for a kilometer. Alhaji Musa, the station manager, is seen letting certain vehicles 'skip' the line for a 'service charge.' Your aunt needs kerosene for cooking, and you're already two hours in the queue.",
+      choices:[
+        {label:"Queue honestly like everyone else, however long it takes", next:"n2_honest"},
+        {label:"Pay the 'service charge' to skip ahead", next:"n2_paid"},
+        {label:"Quietly document what Alhaji Musa is doing", next:"n2_investigate"},
+        {label:"Propose a community rationing system to those around you", next:"n2_organize"}
+      ]
+    },
+    n2_honest:{
+      speaker:"Narrator",
+      text:"Six hours later, you get your turn — exhausted but owing no one anything. An elderly man behind you nods approvingly: 'Patience go pay one day, my son.'",
+      effects:{"stats.integrity":5,"stats.citizenParticipation":3},
+      choices:[{label:"Head home", next:"__END__"}]
+    },
+    n2_paid:{
+      speaker:"Narrator",
+      text:"You pay quietly and skip ahead. It costs you ₦2,000 extra, but you save four hours. Nobody confronts you — but a woman further back recognizes your face and mutters something to her neighbor.",
+      effects:{"stats.integrity":-6,"stats.publicTrust":-4,"relationships.touts":5},
+      setsFlags:{m3_paid_to_skip:true},
+      delayedConsequence:{triggerMission:"m9", effect:{"relationships.mamaChidinma":-5}, note:"Word reached Mama Chidinma about the fuel queue incident."},
+      choices:[{label:"Head home", next:"__END__"}]
+    },
+    n2_investigate:{
+      speaker:"Alhaji Musa (Station Manager)",
+      text:"You note down plate numbers and the pattern of who pays to skip. A pump attendant notices you watching and warns quietly: 'Oga, no be your business be this o. Make you no go port yourself for trouble.'",
+      effects:{"flags.evidence_fuel_queue":true},
+      choices:[
+        {label:"Report it to the Department of Petroleum Resources-style regulator contact", effects:{"stats.integrity":8,"stats.institutionalIndependence":4}, next:"n3_report_result"},
+        {label:"Keep the evidence for later — not the right moment", next:"__END__"}
+      ]
+    },
+    n2_organize:{
+      speaker:"Narrator",
+      text:"You suggest families take turns holding spots and sharing the wait. A few people laugh you off, but about fifteen households agree. It's imperfect, but it cuts everyone's wait time by half.",
+      effects:{"stats.citizenParticipation":10,"stats.socialCohesion":6,"relationships.emeka":10},
+      choices:[{label:"Head home", next:"__END__"}]
+    },
+    n3_report_result:{
+      speaker:"Narrator",
+      text:"The regulator's local office takes your statement but gives no timeline. Alhaji Musa is never seen running the 'skip line' openly again — though whether that's reform or just caution, you can't be sure.",
+      choices:[{label:"Head home", next:"__END__"}]
+    }
+  }
+},
+
+m4: {
+  title:"The Ward Meeting",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"Your first formal civic meeting at the Ward Development Office. A facilitator explains the structure: Ward → Local Government Area (LGA) → State House of Assembly → National Assembly. Baba Suleiman leans over: 'Most people never learn this until election season. Listen well.'",
+      choices:[
+        {label:"Ask the facilitator how LGA budgets are actually decided", next:"n2_ask_budget", civicNote:"civic_ref_lga_01"},
+        {label:"Stay quiet and just absorb the information", next:"n2_observe"},
+        {label:"Use the floor time to loudly promote yourself as a future leader", next:"n2_perform"}
+      ]
+    },
+    n2_ask_budget:{
+      speaker:"Facilitator",
+      text:"'Good question. The LGA prepares estimates, the Legislative arm — the Councillors — are meant to scrutinize and approve them. In practice, oversight capacity varies a lot by LGA.' Several attendees nod, now more engaged.",
+      effects:{"stats.citizenParticipation":8,"stats.administrativeCapacity":3},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_observe:{
+      speaker:"Narrator",
+      text:"You absorb the structure quietly — useful knowledge, but no one in the room notices you.",
+      effects:{"stats.citizenParticipation":2},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_perform:{
+      speaker:"Narrator",
+      text:"You speak passionately about 'leading the next generation.' Some young people cheer; a few older residents exchange skeptical glances — ambition without a track record reads differently to different audiences.",
+      effects:{"stats.publicTrust":-3,"relationships.emeka":5,"relationships.mamaChidinma":-5},
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
+},
+
+m5: {
+  title:"Whispers at the Market",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"A voice note circulates on a community WhatsApp-style group: 'The Hausa traders' association don dey plan to chase our people comot from the north section of the market by force!' It's spreading fast, with angry replies piling up.",
+      choices:[
+        {label:"Visit the named association's leader to verify the claim", next:"n2_verify"},
+        {label:"Forward it to a few more groups 'just in case it's true'", next:"n2_spread"},
+        {label:"Publicly post that it's almost certainly false without checking", next:"n2_assume"}
+      ]
+    },
+    n2_verify:{
+      speaker:"Alhaji Garba (Association Leader)",
+      text:"He looks exhausted. 'This one too? Na the third time this year somebody go spread lie like this for market. We never ask anybody comot anywhere. Na person wey wan buy our stalls cheap dey spread this kain thing, I suspect.'",
+      effects:{"flags.evidence_misinformation":true},
+      choices:[
+        {label:"Publicly debunk the rumor with what you found", effects:{"stats.socialCohesion":10,"stats.publicTrust":6,"relationships.emeka":5}, next:"__END__"},
+        {label:"Quietly let it fade rather than drawing more attention", effects:{"stats.socialCohesion":3}, next:"__END__"}
+      ]
+    },
+    n2_spread:{
+      speaker:"Narrator",
+      text:"Within hours, tension in the market spikes. Two minor scuffles break out between traders who were, days ago, on perfectly good terms. You realize your forward helped fuel it.",
+      effects:{"stats.socialCohesion":-12,"stats.publicTrust":-5},
+      setsFlags:{m5_spread_rumor:true},
+      delayedConsequence:{triggerMission:"m10", effect:{"stats.socialCohesion":-5}, note:"Old market tensions resurface during the land dispute."},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_assume:{
+      speaker:"Narrator",
+      text:"You're right that it was false — but your confident dismissal, without evidence, comes off as dismissive to those genuinely worried. 'How you take sure?' someone asks pointedly. Being right isn't the same as being credible.",
+      effects:{"stats.publicTrust":-2,"stats.socialCohesion":2},
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
+},
+
+m6: {
+  title:"The Inducement",
+  entryRules:[
+    {requires:{"flags.m1_bribe_accepted":true}, node:"n1_known"}
+  ],
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"A well-dressed man introduces himself as 'working with the forthcoming council candidate.' He knows your name, your street, and — unsettlingly — your aunt's shop. 'We just need small help. Market women dey respect you. ₦300,000, you share small-small, make them vote well. Nobody go know.'",
+      choices:[
+        {label:"Accept and distribute the money", next:"n2_accept"},
+        {label:"Reject, and explain to him why this is harmful", next:"n2_reject"},
+        {label:"Report the approach to an election integrity contact", next:"n2_report"},
+        {label:"Pretend to agree, but investigate the network behind him first", next:"n2_investigate"}
+      ]
+    },
+    n1_known:{
+      speaker:"Narrator",
+      text:"The man smiles too easily. 'I hear say you don already chop before' — he's heard about the water fund 'arrangement.' 'So make we no waste time. ₦300,000, same as before.' Your past choice has shaped how he sees you.",
+      choices:[
+        {label:"Accept and distribute the money", next:"n2_accept"},
+        {label:"Reject firmly — you've changed your approach", effects:{"stats.integrity":10}, next:"n2_reject"},
+        {label:"Report the approach to an election integrity contact", next:"n2_report"}
+      ]
+    },
+    n2_accept:{
+      speaker:"Narrator",
+      text:"You distribute the money quietly to a few households. Some take it gratefully; one elderly woman refuses, saying 'My vote no dey for sale.' The candidate wins the ward narrowly. You never find out whether the money mattered — or just the ordinary work of campaigning did.",
+      effects:{"stats.integrity":-15,"stats.electoralLegitimacy":-10,"stats.publicTrust":-8},
+      setsFlags:{m6_distributed_bribe:true},
+      delayedConsequence:{triggerMission:"m11", effect:{"flags.known_vote_buyer":true}, note:"Your history with vote-buying follows you into politics."},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_reject:{
+      speaker:"Narrator",
+      text:"'You get mouth,' the man says, unimpressed, and leaves. You explain to a few neighbors what happened — some are grateful for the warning, others shrug: 'Na so Nigeria be.' Changing minds is slower than changing laws.",
+      effects:{"stats.integrity":10,"stats.publicTrust":5},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_report:{
+      speaker:"Narrator",
+      text:"You report the approach to a civic election-monitoring contact. They log it, but explain that without recorded evidence or the man's identity confirmed, formal action is unlikely. Still, your name is now known to people who track this pattern.",
+      effects:{"stats.integrity":8,"stats.institutionalIndependence":6},
+      setsFlags:{m6_reported:true},
+      delayedConsequence:{triggerMission:"m11", effect:{"relationships.electionWatchdog":15}, note:"An election-monitoring contact remembers your report."},
+      choices:[{label:"Continue", next:"__END__"}, {label:"Continue", next:"__END__"}]
+    },
+    n2_investigate:{
+      speaker:"Narrator",
+      text:"You pretend to go along, taking photos of the cash handoff and a vehicle plate number before quietly withdrawing from the scheme. It's risky — if discovered, you'd lose all credibility on both sides. But you now hold real evidence of an organized vote-buying operation.",
+      effects:{"stats.integrity":6,"stats.institutionalIndependence":8},
+      setsFlags:{m6_evidence_gathered:true},
+      delayedConsequence:{triggerMission:"m11", effect:{"flags.has_vote_buying_evidence":true}, note:"Your evidence becomes a card you can play in Chapter 3."},
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
+},
+
+m7: {
+  title:"School Without Walls",
+  entryRules:[
+    {requires:{"relationships.bello":-40}, node:"n1_hostile"}
+  ],
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"Oyemaji Primary School's roof collapsed four months ago during a storm. Classes hold under a mango tree. The 'contractor' handling repairs is the same outfit tied to the water fund back in Mission 1. Parents are organizing, unsure who to trust.",
+      choices:[
+        {label:"Report the contractor link to the press", next:"n2_press"},
+        {label:"Organize a parent protest at the LGA office", next:"n2_protest"},
+        {label:"Negotiate directly with the contractor for faster delivery", next:"n2_negotiate"},
+        {label:"Accept a quiet 'thank-you' gift to stay out of it", next:"n2_gift"}
+      ]
+    },
+    n1_hostile:{
+      speaker:"Narrator",
+      text:"Because you've made an enemy of Bello's camp before, the contractor's men are already watching the parent group warily — your involvement is expected, and countermeasures seem to already be in motion. Still, parents look to you for guidance.",
+      choices:[
+        {label:"Report the contractor link to the press, despite the risk", next:"n2_press"},
+        {label:"Organize a parent protest at the LGA office", next:"n2_protest"},
+        {label:"Step back and let others lead this one", next:"n2_stepback"}
+      ]
+    },
+    n2_press:{
+      speaker:"Narrator",
+      text:"A local paper runs the story, naming the repeat contractor. It gains some traction online, but the contractor's lawyers issue a stern rebuttal. Nothing is resolved immediately, but public scrutiny is now harder to ignore.",
+      effects:{"stats.publicTrust":8,"stats.institutionalIndependence":5},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_protest:{
+      speaker:"Narrator",
+      text:"Fifty parents show up at the LGA office. An embarrassed official promises 'immediate action' on camera. Three weeks later, temporary shelter is erected — not a full repair, but children are out of the sun.",
+      effects:{"stats.publicTrust":10,"stats.serviceDelivery":6,"stats.citizenParticipation":8},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_negotiate:{
+      speaker:"Contractor's Site Manager",
+      text:"'Oga, we dey try, money never reach well. If una fit help us expedite paperwork for LGA, we go fast-track am.' It's unclear if this is genuine or a stalling tactic.",
+      choices:[
+        {label:"Help expedite — cautiously, in writing", effects:{"stats.serviceDelivery":4,"stats.administrativeCapacity":3}, next:"__END__"},
+        {label:"Decline — this isn't your role to play", effects:{"stats.integrity":3}, next:"__END__"}
+      ]
+    },
+    n2_gift:{
+      speaker:"Narrator",
+      text:"You accept a food hamper 'for your trouble' and quietly stop attending parent meetings. The roof remains unfixed for another two terms. You tell yourself it wasn't really a bribe — it was just a gift.",
+      effects:{"stats.integrity":-10,"stats.publicTrust":-6,"stats.serviceDelivery":-4},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_stepback:{
+      speaker:"Narrator",
+      text:"You let Emeka's group lead instead. They do a credible job, but without your market-ledger experience from Mission 1, the evidence trail is thinner, and the campaign loses momentum within weeks.",
+      effects:{"stats.serviceDelivery":-2},
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
+},
+
+m8: {
+  title:"Clinic Closed",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"Majeriya's primary health clinic has been locked for three weeks — not from lack of funding alone, but a dispute: two posted nurses were never actually paid for five months and left. A frustrated civil servant, Nurse Amaka, reaches out to you privately.",
+      choices:[
+        {label:"Pursue media pressure on the LGA health office", next:"n2_media"},
+        {label:"Petition the LGA health office directly and formally", next:"n2_petition"},
+        {label:"Mobilize traditional and religious leaders to intervene", next:"n2_leaders"},
+        {label:"Work quietly with Nurse Amaka as a whistleblower source", next:"n2_whistleblower"}
+      ]
+    },
+    n2_media:{
+      speaker:"Narrator",
+      text:"A radio station picks up the story. It's embarrassing for the LGA, but the underlying funding gap isn't a story that gets magically fixed by embarrassment alone — the health office blames 'budget release delays' from a level above them.",
+      effects:{"stats.publicTrust":6,"stats.administrativeCapacity":-2},
+      choices:[{label:"Continue", next:"__END__"}, {}]
+    },
+    n2_petition:{
+      speaker:"Narrator",
+      text:"Your formal, well-documented petition impresses a mid-level official, who admits privately that 'the budget line exists, the release process is just slow.' You learn that administrative capacity, not just corruption, is often the real bottleneck.",
+      effects:{"stats.administrativeCapacity":5,"stats.publicTrust":4},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_leaders:{
+      speaker:"Narrator",
+      text:"A respected elder and a local imam jointly visit the LGA chairman's office. The visit carries social weight that your petition alone didn't. A temporary locum nurse is posted within two weeks.",
+      effects:{"stats.serviceDelivery":8,"stats.socialCohesion":5},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_whistleblower:{
+      speaker:"Nurse Amaka",
+      text:"She hands you payroll records showing the unpaid salary gap — real evidence of a systemic issue, not just local mismanagement. 'Use it well,' she says. 'I still need my next posting to go smoothly.'",
+      effects:{"flags.evidence_health_payroll":true,"relationships.amaka":20},
+      delayedConsequence:{triggerMission:"m11", effect:{"relationships.amaka":10}, note:"Amaka remembers you protected her as a source."},
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
+},
+
+m9: {
+  title:"Building the Coalition",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"You decide to formalize a community association. You have limited 'credibility points' (reflecting time, trust, and small resources) to allocate across four competing asks: Market Women want a dedicated market-day security presence; the Youth Group wants a skills-training fund; Elders want a dispute-resolution council revived; the Religious Leader wants an interfaith peace committee funded.",
+      choices:[
+        {label:"Prioritize Market Women's request", effects:{"relationships.mamaChidinma":15,"stats.economicOpportunity":4,"relationships.emeka":-5}, next:"n2_result"},
+        {label:"Prioritize the Youth Group's request", effects:{"relationships.emeka":15,"stats.citizenParticipation":5,"relationships.mamaChidinma":-5}, next:"n2_result"},
+        {label:"Prioritize the Elders' dispute-resolution council", effects:{"relationships.babaSuleiman":15,"stats.socialCohesion":6}, next:"n2_result"},
+        {label:"Split resources thinly across all four", effects:{"stats.socialCohesion":3,"stats.administrativeCapacity":-3}, next:"n2_split_result"}
+      ]
+    },
+    n2_result:{
+      speaker:"Narrator",
+      text:"Your chosen priority group is energized and firmly in your corner — but the others quietly note they were passed over. Coalitions are built one honest trade-off at a time, not by pleasing everyone equally.",
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_split_result:{
+      speaker:"Narrator",
+      text:"No one is upset, but no one is especially impressed either. The association limps forward without a clear identity or standout achievement to point to.",
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
+},
+
+m10: {
+  title:"The Line Is Drawn",
+  nodes:{
+    n1:{
+      speaker:"Narrator",
+      text:"A boundary dispute between Majeriya and the neighboring Odogwu community — over land earmarked for a new festival ground — threatens to boil over. Both sides have legitimate claims and both have hot-headed individuals pushing for confrontation. The annual harvest festival is in five days.",
+      choices:[
+        {label:"Convene a joint meeting of elders from both communities", requires:{"relationships.babaSuleiman":10}, next:"n2_elders_meeting"},
+        {label:"Gather land records and documented history to clarify facts", next:"n2_records"},
+        {label:"Rally your own community to 'hold the line' at the disputed boundary", next:"n2_rally"},
+        {label:"Stay out of it — this isn't your fight", next:"n2_stayout"}
+      ]
+    },
+    n2_elders_meeting:{
+      speaker:"Narrator",
+      text:"With Baba Suleiman's standing, elders from both sides agree to meet. It's tense, but old relationships hold. A compromise — shared festival use with a formal demarcation review — is agreed.",
+      effects:{"stats.socialCohesion":15,"stats.publicTrust":8},
+      setsFlags:{m10_outcome:"peaceful_mediation"},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_records:{
+      speaker:"Narrator",
+      text:"You spend two days in dusty LGA archive rooms and find a 1987 survey document that neither side had seen. Presenting it neutrally to both sides defuses the angriest claims — facts don't solve everything, but they narrow the argument.",
+      effects:{"stats.socialCohesion":10,"stats.administrativeCapacity":4},
+      setsFlags:{m10_outcome:"evidence_based"},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_rally:{
+      speaker:"Narrator",
+      text:"Dozens from Majeriya gather at the boundary. Odogwu youths respond in kind. A tense standoff is narrowly defused by police presence — not by anyone's wisdom. You've shown you can mobilize people, but at real risk to everyone involved.",
+      effects:{"stats.socialCohesion":-15,"stats.security":-8,"stats.citizenParticipation":10},
+      setsFlags:{m10_outcome:"mobilized_confrontation"},
+      choices:[{label:"Continue", next:"__END__"}]
+    },
+    n2_stayout:{
+      speaker:"Narrator",
+      text:"The dispute simmers without your involvement, eventually settled roughly by LGA fiat — a decision neither community fully respects. Your absence is noted by those who later decide who 'has what it takes.'",
+      effects:{"stats.socialCohesion":-5,"stats.citizenParticipation":-5},
+      setsFlags:{m10_outcome:"absent"},
+      choices:[{label:"Continue", next:"__END__"}]
+    }
+  }
 }
-};
+});
+Object.assign(MISSIONS, {
+m11: {
+  title:"The Approach",
+  entryRules:[
+    {requires:{"flags.m10_outcome":"peaceful_mediation"}, node:"n1_reformer"},
+    {requires:{"flags.m10_outcome":"evidence_based"}, node:"n1_technocrat"},
+    {requires:{"flags.m10_outcome":"mobilized_confrontation"}, node:"n1_populist"},
+    {requires:{"flags.m10_outcome":"absent"}, node:"n1_noone"}
+  ],
+  nodes:{
+    n1_reformer:{
+      speaker:"Hajiya Zainab Lawal (Reform Coalition)",
+      text:"'I watched how you handled the Odogwu boundary matter — calm, inclusive, no bloodshed. That's rare. We're building a coalition that wants to contest the Ward Councillor seat on a clean-governance platform. Interested?'",
+      choices:[{label:"This feels like the right path. Accept the conversation.", next:"__END__"}, {label:"Ask what 'clean governance platform' really means in practice", next:"__END__"}]
+    },
+    n1_technocrat:{
+      speaker:"Barrister Femi Adisa (Civic Policy Network)",
+      text:"'That archive document you found — most people wouldn't have bothered. We need people who do their homework before they open their mouths. Our group backs candidates on competence, not charisma. Care to talk?'",
+      choices:[{label:"Accept the conversation", next:"__END__"}]
+    },
+    n1_populist:{
+      speaker:"Chief Obinna Ikemba (People's Voice Movement)",
+      text:"'You pulled real numbers to that boundary line — that's leadership, my friend! People respect strength. We need someone who can mobilize the streets. The party wants fighters, not just paperwork people.'",
+      choices:[{label:"Accept the conversation", next:"__END__"}]
+    },
+    n1_noone:{
+      speaker:"Narrator",
+      text:"No one comes looking for you — not yet. If you want a political future, you'll have to go find it yourself, starting from a weaker position than those who built visible track records.",
+      choices:[{label:"Seek out a party office on your own initiative", next:"__END__"}]
+    }
+  }
+}
+});
+  
 
 /* ---------------- ENGINE ---------------- */
 
