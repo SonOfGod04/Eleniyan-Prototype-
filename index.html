@@ -219,6 +219,28 @@ function generateDelegates(count, partyId){
     addJournal("⚠ A financial disclosure inconsistency has been flagged by investigative reporters.");
   }
 }
+
+const POLICY_POOL = [
+  {id:'education', label:'Education Reform'},
+  {id:'health', label:'Healthcare Access'},
+  {id:'roads', label:'Roads & Transport'},
+  {id:'agriculture', label:'Agriculture & Food Security'},
+  {id:'security', label:'Community Security'},
+  {id:'jobs', label:'Jobs & Economic Opportunity'},
+  {id:'anticorruption', label:'Anti-Corruption & Transparency'}
+];
+
+const PARTIES = {
+  FAP: {name:"Forward Alliance Party", tagline:"Institutional reform & competence.",
+        weights:{integrity:0.50, loyalty:0.10, money:0.20, identity:0.20}},
+  PUC: {name:"People's Unity Congress", tagline:"Broad coalition, pragmatic organizing.",
+        weights:{integrity:0.15, loyalty:0.35, money:0.30, identity:0.20}},
+  NRF: {name:"National Renewal Front", tagline:"Infrastructure-led, centralized efficiency.",
+        weights:{integrity:0.20, loyalty:0.40, money:0.25, identity:0.15}},
+  GJM: {name:"Grassroots Justice Movement", tagline:"Youth & labor-driven, high internal democracy.",
+        weights:{integrity:0.40, loyalty:0.20, money:0.10, identity:0.30}}
+};
+  
   
 /* ---------------- MISSION DATA ---------------- */
 
