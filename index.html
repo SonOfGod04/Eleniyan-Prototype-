@@ -213,6 +213,12 @@ function generateDelegates(count, partyId){
     return { ...a, threshold: 40 + Math.random()*20 };
   });
 }
+  function checkHiddenFundingExposure(GS){
+  if(GS.flags.undisclosed_funding_risk && Math.random() < 0.35){
+    GS.flags.funding_scandal_triggered = true;
+    addJournal("⚠ A financial disclosure inconsistency has been flagged by investigative reporters.");
+  }
+}
   
 /* ---------------- MISSION DATA ---------------- */
 
