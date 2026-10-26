@@ -181,6 +181,39 @@ const ROADMAP = [
   partyId: null
 };
 
+  function runPrimary(partyId, candidateProfile, delegateCount = 50){
+  // Each delegate is a simple weighted-preference agent, not a monolith
+  let delegates = generateDelegates(delegateCount, partyId);
+  let votes = 0;
+
+  delegates.forEach(delegate=>{
+    let score = 0;
+    score += delegate.weighting.integrity * candidateProfile.publicRecord.integrityScore;
+    score += delegate.weighting.loyalty * relationshipWithPartyLeadership(candidateProfile);
+    score += delegate.weighting.money * candidateProfile.disclosedFunding.reduce((a,f)=>a+f.amount,0) / 1000000;
+    score += delegate.weighting.ethnicRegional * identityAffinity(delegate, candidateProfile); // modeled as ONE of several factors, never sole determinant
+    score -= candidateProfile.publicRecord.knownVoteBuyer ? delegate.integrityPenaltySensitivity * 10 : 0;
+
+    if(score > delegate.threshold) votes++;
+  });
+
+  return {
+    votesWon: votes,
+    totalDelegates: delegateCount,
+    won: votes > delegateCount/2
+  };
+}
+
+function generateDelegates(count, partyId){
+  // Different parties produce different delegate "personalities" —
+  // FAP delegates weight integrity/money less on loyalty; PUC delegates weight loyalty/patronage heavily; etc.
+  const archetypes = PARTY_DELEGATE_PROFILES[partyId];
+  return Array.from({length:count}, ()=>{
+    const a = archetypes[Math.floor(Math.random()*archetypes.length)];
+    return { ...a, threshold: 40 + Math.random()*20 };
+  });
+}
+  
 /* ---------------- MISSION DATA ---------------- */
 
 const MISSIONS = {
