@@ -204,6 +204,138 @@ const ROADMAP = [
   };
 }
 
+function renderPhase(){
+  const story = document.getElementById('story');
+  if(GS.phase === 'candidate_setup') renderCandidateSetup();
+  else if(GS.phase === 'primary_result') renderPrimaryResult();
+  else if(GS.phase === 'campaign_alloc') renderCampaignAllocation();
+  else if(GS.phase === 'campaign_event') renderCampaignEvent();
+  else if(GS.phase === 'election_result') renderElectionResult();
+  else if(GS.phase === 'governance_alloc') renderGovernanceYear();
+  else if(GS.phase === 'governance_event') renderGovernanceEvent();
+  else if(GS.phase === 'term_summary') renderTermSummary();
+  renderStats(); renderRelationships(); renderRoadmap(); renderJournal();
+}
+
+function renderCandidateSetup(){
+  document.getElementById('speaker').textContent = "Chapter 3: The Political Aspirant";
+  document.getElementById('missionLabel').textContent = "Candidate Registration";
+  let html = `<p>You've decided to contest the Ward Councillor seat. Choose a party and your top three priorities.
+  Your prior conduct (integrity ${GS.stats.integrity}, trust ${GS.stats.publicTrust}) is already part of your record — it cannot be edited, only built upon.</p>`;
+
+  html += `<h3 style="color:var(--accent2);margin-top:16px;">Choose a Party</h3>`;
+  for(const pid in PARTIES){
+    const p = PARTIES[pid];
+    html += `<label style="display:block;margin:6px 0;">
+      <input type="radio" name="party" value="${pid}"> <strong>${p.name}</strong> — <em>${p.tagline}</em>
+    </label>`;
+  }
+
+  html += `<h3 style="color:var(--accent2);margin-top:16px;">Choose up to 3 Priorities</h3>`;
+  POLICY_POOL.forEach(pp=>{
+    html += `<label style="display:inline-block;width:45%;margin:4px 0;">
+      <input type="checkbox" class="policy-check" value="${pp.id}"> ${pp.label}
+    </label>`;
+  });
+
+  html += `<br><br><button class="choice" onclick="submitCandidateSetup()">Register Candidacy →</button>`;
+
+  document.getElementById('text').innerHTML = html;
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('civicNoteBox').innerHTML = `<div class="civic-note">
+    <span class="tag verified-general">VERIFIED-GENERAL</span>
+    Candidates in Nigeria must generally be sponsored by a registered political party and meet constitutional/legal
+    eligibility criteria (age, citizenship, and other requirements vary by office). This is simplified for gameplay.
+  </div>`;
+}
+
+function submitCandidateSetup(){
+  const partyEl = document.querySelector('input[name="party"]:checked');
+  if(!partyEl){ alert('Choose a party first.'); return; }
+  const checks = [...document.querySelectorAll('.policy-check:checked')].map(c=>c.value);
+  if(checks.length === 0 || checks.length > 3){ alert('Choose 1 to 3 priorities.'); return; }
+
+  GS.candidate = {
+    partyId: partyEl.value,
+    priorities: checks,
+    disclosedFunding: 0,
+    undisclosedFunding: 0
+  };
+  addJournal(`You registered with ${PARTIES[GS.candidate.partyId].name}.`);
+  GS.phase = 'primary_running';
+  const result = runPrimary();
+  GS.lastPrimaryResult = result;
+  GS.phase = 'primary_result';
+  render();
+  saveGame();
+}
+
+function runPrimary(){
+  const party = PARTIES[GS.candidate.partyId];
+  const delegateCount = 40;
+  let votes = 0;
+
+  const integrityScore = GS.stats.integrity;
+  const loyaltyScore = 50 + (GS.relationships.bello||0)*0.2; // placeholder: party-linked relationship signal
+  const moneyScore = Math.min(100, GS.candidate.disclosedFunding/3000 + GS.candidate.undisclosedFunding/2000);
+  const identityScore = 50; // deliberately neutral baseline — avoids modeling any group as a monolith
+
+  for(let i=0;i<delegateCount;i++){
+    const noise = (Math.random()-0.5)*24;
+    let score = party.weights.integrity*integrityScore
+              + party.weights.loyalty*loyaltyScore
+              + party.weights.money*moneyScore
+              + party.weights.identity*identityScore
+              + noise;
+    if(GS.flags.known_vote_buyer) score -= 15;
+    if(GS.flags.has_vote_buying_evidence) score += 5;
+    if(score > 50) votes++;
+  }
+
+  return {
+    votes, delegateCount, won: votes > delegateCount/2,
+    breakdown:{integrityScore:Math.round(integrityScore), loyaltyScore:Math.round(loyaltyScore),
+               moneyScore:Math.round(moneyScore), identityScore}
+  };
+}
+
+function renderPrimaryResult(){
+  const r = GS.lastPrimaryResult;
+  document.getElementById('speaker').textContent = `${PARTIES[GS.candidate.partyId].name} — Primary Result`;
+  document.getElementById('missionLabel').textContent = "Chapter 3: Party Primary";
+
+  let html = `<p>Delegates voted: <strong>${r.votes} / ${r.delegateCount}</strong></p>
+  <p>Key factors delegates weighed (for your learning, not literal vote math): 
+  Integrity signal ${r.breakdown.integrityScore}, Loyalty signal ${r.breakdown.loyaltyScore}, 
+  Funding signal ${r.breakdown.moneyScore}, Identity-neutral baseline ${r.breakdown.identityScore}.</p>`;
+
+  if(r.won){
+    html += `<p style="color:var(--accent);">You won the primary. The party will back you in the general election.</p>`;
+    document.getElementById('text').innerHTML = html;
+    document.getElementById('choices').innerHTML =
+      `<button class="choice" onclick="startCampaignPhase()">Begin General Election Campaign →</button>`;
+  } else {
+    html += `<p style="color:var(--bad);">You did not win the party's nomination this cycle.</p>`;
+    document.getElementById('text').innerHTML = html;
+    document.getElementById('choices').innerHTML = `
+      <button class="choice" onclick="pivotToAlt('civic_org')">Return to community organizing and try again next cycle</button>
+      <button class="choice" onclick="pivotToAlt('support_role')">Accept a support/advisory role in the winning candidate's camp</button>
+      <button class="choice" onclick="pivotToAlt('independent')">Explore running as an independent where legally permitted</button>
+    `;
+  }
+  document.getElementById('civicNoteBox').innerHTML = '';
+}
+
+function pivotToAlt(path){
+  addJournal(`Primary loss → chosen path: ${path}`);
+  GS.flags.primary_alt_path = path;
+  // In a full build, each path opens a distinct side-arc. For this prototype, we log it and allow a retry.
+  GS.phase = 'candidate_setup';
+  alert("This loss becomes a real story thread later (Chapter 6 alternative routes). For this prototype, you may try the primary again.");
+  render();
+  saveGame();
+}
+
 function generateDelegates(count, partyId){
   // Different parties produce different delegate "personalities" —
   // FAP delegates weight integrity/money less on loyalty; PUC delegates weight loyalty/patronage heavily; etc.
