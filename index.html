@@ -164,6 +164,23 @@ const ROADMAP = [
   {id:"m11", title:"The Approach", status:"locked", teaser:"Chapter 3 begins — someone wants to talk politics."}
 ];
 
+  const candidateProfile = {
+  ideology: {           // -100 (interventionist) to +100 (market-oriented) etc. Purely descriptive, not "good/bad"
+    economicApproach: 0,
+    socialApproach: 0,
+    governanceStyle: 0   // -100 (centralizing) to +100 (devolving/consultative)
+  },
+  policyPriorities: [],  // ranked list, max 3 chosen from a pool (education, health, roads, agriculture, security, jobs, anti-corruption)
+  publicRecord: {        // auto-populated from Chapters 1-2 flags — this is the "receipts" system
+    integrityScore: GS.stats.integrity,
+    participationScore: GS.stats.citizenParticipation,
+    knownVoteBuyer: GS.flags.known_vote_buyer || false,
+    hasEvidenceCredibility: GS.flags.has_vote_buying_evidence || false
+  },
+  disclosedFunding: [],   // {source, amount, disclosed:true/false}
+  partyId: null
+};
+
 /* ---------------- MISSION DATA ---------------- */
 
 const MISSIONS = {
