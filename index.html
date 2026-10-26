@@ -980,18 +980,17 @@ function endMission(){
     });
 
     if(MISSIONS[GS.currentMission]){
-      GS.currentNode = resolveEntryNode(GS.currentMission);
-      addJournal(`— Mission "${MISSIONS[GS.currentMission].title}" begins —`);
-      render();
-      saveGame();
-    } else {
-      showRoadmapOnlyScreen();
-    }
-  } else {
-    showRoadmapOnlyScreen();
-  }
+  GS.currentNode = resolveEntryNode(GS.currentMission);
+  addJournal(`— Mission "${MISSIONS[GS.currentMission].title}" begins —`);
+  render();
+  saveGame();
+} else {
+  // Chapter 2 complete -> transition into Chapter 3
+  GS.phase = 'candidate_setup';
+  render();
+  saveGame();
 }
-
+    
 // Supports missions with multiple possible starting nodes based on prior flags
 function resolveEntryNode(missionId){
   const mission = MISSIONS[missionId];
