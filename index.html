@@ -852,7 +852,7 @@ function startGame(){
   document.getElementById('setup').style.display='none';
   document.getElementById('app').style.display='grid';
   addJournal(`You begin your story in ${st}, as a ${arch === 'trader' ? "trader's child" : arch}.`);
-  render();
+  ();
 }
 
 function getVal(obj, path){
@@ -902,6 +902,11 @@ function addJournal(text){
 function currentMissionObj(){ return MISSIONS[GS.currentMission]; }
 
 function render(){
+  if(GS.phase && GS.phase !== 'mission'){
+    renderPhase();
+    return;
+  }
+  // ...existing mission rendering code stays exactly as-is below this line...
   const mission = currentMissionObj();
   const node = mission.nodes[GS.currentNode];
   document.getElementById('missionLabel').textContent = `Mission: ${mission.title}`;
